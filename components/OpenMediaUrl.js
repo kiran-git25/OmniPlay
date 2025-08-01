@@ -1,46 +1,127 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 
-export default function OpenMediaUrl() {
-  const [url, setUrl] = useState("");
-  const [type, setType] = useState("");
+export default function OpenMediaUrl({ onLoad }) {
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const detectType = (url) => {
-    const extension = url.split(".").pop().toLowerCase();
-    if (["mp4", "webm", "mov", "mkv", "avi", "flv"].includes(extension)) return "video";
-    if (["mp3", "wav", "ogg", "aac", "flac", "m4a"].includes(extension)) return "audio";
-    if (url.includes("youtube.com") || url.includes("youtu.be")) return "youtube";
-    if (url.includes("instagram.com")) return "instagram";
-    return null;
+  const handleLoad = async () => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const parsed = parseUrl(url);
+
+      if (!parsed) {
+        setError('Unsupported or invalid media URL');
+        setLoading(false);
+        return;
+      }
+
+      onLoad({
+        ...parsed,
+        url,
+        isRemote: true,
+        lastModified: Date.now(),
+        name: parsed.name || 'external-media',
+      });
+
+      setUrl('');
+    } catch (err) {
+      setError('Failed to load media');
+    }
+
+    setLoading(false);
   };
 
-  const handleLoad = () => {
-    const detected = detectType(url);
-    if (detected) setType(detected);
-    else alert("Unsupported or unrecognized media URL.");
+  const parseUrl = (url) => {
+    try {
+      const youtubeMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]+)/);
+      if (youtubeMatch) {
+        const videoId = youtubeMatch[1];
+        return {
+          type: 'youtube',
+          embed: `https://www.youtube.com/embed/${videoId}`,
+          name: 'YouTube Video',
+        };
+      }
+
+      const instaMatch = url.match(/instagram\.com\/(?:reel|p)\/([^/?#&]+)/);
+      if (instaMatch) {
+        return {
+          type: 'instagram',
+          embed: url,
+          name: 'Instagram Reel',
+        };
+      }
+
+      const extension = url.split('.').pop().toLowerCase();
+      const supported = [
+        'mp4', 'mp3', 'webm', 'ogg', 'aac', 'wav', 'flac', 'm4a',
+        'jpg', 'jpeg', 'png', 'gif', 'svg', 'webp',
+        'pdf', 'txt', 'json', 'xml', 'csv'
+      ];
+
+      if (supported.includes(extension)) {
+        return {
+          type: 'direct',
+          embed: url,
+          name: url.split('/').pop(),
+        };
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
   };
 
   return (
-    <div className="p-4 bg-white rounded-xl shadow-md max-w-xl mx-auto mt-4">
-      <h2 className="text-xl font-bold mb-3">📎 Paste Media Link</h2>
-      <div className="flex gap-2 items-center">
-        <input
-          type="text"
-          placeholder="Paste your media URL here..."
-          className="flex-grow border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
-        <button
-          onClick={handleLoad}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition"
-        >
-          Load
-        </button>
-      </div>
+    <div style={styles.wrapper}>
+      <input
+        type="url"
+        value={url}
+        placeholder="Paste a media link (YouTube, Instagram, MP4...)"
+        onChange={(e) => setUrl(e.target.value)}
+        style={styles.input}
+      />
+      <button onClick={handleLoad} disabled={loading || !url} style={styles.button}>
+        {loading ? 'Loading...' : 'Load'}
+      </button>
+      {error && <div style={styles.error}>{error}</div>}
+    </div>
+  );
+}
 
-      <div className="mt-4">
-        {type === "audio" && <audio controls className="w-full mt-2" src={url}></audio>}
-        {type === "video" && <video controls className="w-full mt-2" src={url}></video>}
-        {type === "youtube" && (
-          <iframe
-            className="w-full mt-2 rounded
+const styles = {
+  wrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '20px',
+    maxWidth: '700px',
+    margin: '0 auto',
+    gap: '12px',
+  },
+  input: {
+    flex: 1,
+    padding: '12px',
+    fontSize: '1rem',
+    borderRadius: '6px',
+    border: '1px solid #ccc',
+  },
+  button: {
+    padding: '12px',
+    backgroundColor: '#4A90E2',
+    color: 'white',
+    fontWeight: 'bold',
+    borderRadius: '6px',
+    border: 'none',
+    cursor: 'pointer',
+    minWidth: '120px',
+  },
+  error: {
+    color: 'red',
+    fontSize: '0.9rem',
+    marginTop: '-8px',
+  }
+};
