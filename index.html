@@ -1,93 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniPlay - Universal File Viewer</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📁</text></svg>">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OmniPlay - Universal File Viewer</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📁</text></svg>"/>
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <div class="logo">
-                <span class="logo-icon">📁</span>
-                <h1>OmniPlay</h1>
+  <div class="container">
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">📁</span>
+        <h1>OmniPlay</h1>
+      </div>
+      <p class="subtitle">Universal File Viewer - View any file type instantly</p>
+      <div class="ethical-notice">
+        <div class="notice-header">🔒 Privacy & Ethics First</div>
+        <p class="notice-text">
+          OmniPlay does not track or store anything. Your tool, your data — only on your device.
+          Illegal usage (e.g., malware, piracy) is strictly discouraged.
+        </p>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <div class="upload-section" id="uploadSection">
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-zone-content">
+            <div class="upload-icon">📂</div>
+            <h2>Drop files here or click to browse</h2>
+            <p>Supports: PDF, Word, Excel, Images, Archives, Text files and more</p>
+            <input type="file" id="fileInput" multiple hidden />
+            <div class="action-buttons">
+              <button class="browse-btn" onclick="document.getElementById('fileInput').click()">📁 Browse Files</button>
             </div>
-            <p class="subtitle">Universal File Viewer - View any file type instantly</p>
-            
-            <!-- Ethical Notice -->
-            <div class="ethical-notice">
-                <div class="notice-header">🔒 Privacy & Ethics First</div>
-                <p class="notice-text">
-                    OmniPlay does not track or store anything. It's your tool, your data — only on your device. 
-                    Use responsibly. Illegal usage (e.g., spreading malware, pirated media) is strictly discouraged. 
-                    This is a community-built, safe, and open-source platform.
-                </p>
+            <div class="url-loader">
+              <input id="mediaUrlInput" type="text" placeholder="Paste any video/audio/media URL…" class="url-input"/>
+              <button onclick="loadPastedUrl()" class="load-url-btn">▶ Load</button>
             </div>
-        </header>
+          </div>
+        </div>
+      </div>
 
-        <main class="main-content">
-            <div class="upload-section" id="uploadSection">
-                <div class="drop-zone" id="dropZone">
-                    <div class="drop-zone-content">
-                        <div class="upload-icon">📂</div>
-                        <h2>Drop files here or click to browse</h2>
-                        <p>Supports: PDF, Word, Excel, Images, Archives, Text files and more</p>
-                        <input type="file" id="fileInput" multiple hidden>
-                        <div class="action-buttons">
-                            <button class="browse-btn" onclick="document.getElementById('fileInput').click()">
-                                📁 Browse Files
-                            </button>
-                            <button class="url-btn" onclick="openUrlModal()">
-                                🔗 Open URL
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <div class="viewer-section" id="viewerSection" style="display: none;">
+        <div class="viewer-header">
+          <div class="file-info">
+            <span class="file-name" id="fileName"></span>
+            <span class="file-size" id="fileSize"></span>
+            <span class="file-type" id="fileType"></span>
+          </div>
+          <div class="viewer-controls">
+            <button class="control-btn" onclick="downloadFile()" title="Download">💾</button>
+            <button class="control-btn" onclick="closeViewer()" title="Close">✕</button>
+          </div>
+        </div>
+        <div class="viewer-content" id="viewerContent"></div>
+      </div>
 
-            <div class="viewer-section" id="viewerSection" style="display: none;">
-                <div class="viewer-header">
-                    <div class="file-info">
-                        <span class="file-name" id="fileName"></span>
-                        <span class="file-size" id="fileSize"></span>
-                        <span class="file-type" id="fileType"></span>
-                    </div>
-                    <div class="viewer-controls">
-                        <button class="control-btn" onclick="downloadFile()" title="Download">💾</button>
-                        <button class="control-btn" onclick="closeViewer()" title="Close">✕</button>
-                    </div>
-                </div>
-                <div class="viewer-content" id="viewerContent"></div>
-            </div>
+      <div class="file-list" id="fileList" style="display: none;">
+        <h3>Loaded Files</h3>
+        <div class="files-container" id="filesContainer"></div>
+      </div>
+    </main>
 
-            <div class="file-list" id="fileList" style="display: none;">
-                <h3>Loaded Files</h3>
-                <div class="files-container" id="filesContainer"></div>
-            </div>
-        </main>
+    <footer class="footer">
+      <p>&copy; 2025 OmniPlay - Client-side file viewing for maximum security</p>
+    </footer>
+  </div>
 
-        <footer class="footer">
-            <p>&copy; 2025 OmniPlay - Client-side file viewing for maximum security</p>
-        </footer>
-    </div>
+  <div class="loading" id="loading" style="display: none;">
+    <div class="spinner"></div>
+    <p>Processing file...</p>
+  </div>
 
-    <div class="loading" id="loading" style="display: none;">
-        <div class="spinner"></div>
-        <p>Processing file...</p>
-    </div>
-
-    <script src="js/privacy-guard.js"></script>
-    <script src="js/dangerousExtensions.js"></script>
-    <script src="components/UnsafeFileWarning.js"></script>
-    <script src="components/OpenMediaUrl.js"></script>
-    <script src="js/app.js"></script>
-    <script src="js/fileHandlers.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/networking.js"></script>
-    <script src="js/chat-system.js"></script>
-    <script src="test/security-test.js"></script>
-    <script src="test/comprehensive-app-test.js"></script>
+  <!-- JavaScript Components -->
+  <script src="js/privacy-guard.js"></script>
+  <script src="js/dangerousExtensions.js"></script>
+  <script src="components/UnsafeFileWarning.js"></script>
+  <script src="components/OpenMediaUrl.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/fileHandlers.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/networking.js"></script>
+  <script src="js/chat-system.js"></script>
+  <script src="test/security-test.js"></script>
+  <script src="test/comprehensive-app-test.js"></script>
 </body>
 </html>
