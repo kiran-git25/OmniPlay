@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniPlay Testing Interface</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .test-container { background: white; padding: 20px; border-radius: 10px; margin: 10px 0; }
+        .test-button { background: #667eea; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer; }
+        .test-result { background: #f8f9fa; padding: 10px; margin: 10px 0; border-left: 4px solid #28a745; }
+        .test-error { background: #f8d7da; padding: 10px; margin: 10px 0; border-left: 4px solid #dc3545; }
+        .file-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+        .file-item { background: #e9ecef; padding: 15px; border-radius: 8px; text-align: center; }
+        iframe { width: 100%; height: 500px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 OmniPlay Application Testing</h1>
+    
+    <div class="test-container">
+        <h2>Application Status</h2>
+        <button class="test-button" onclick="checkAppStatus()">Check App Health</button>
+        <div id="status-result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Available Test Files</h2>
+        <div class="file-list">
+            <div class="file-item">📄 sample.txt<br><small>Plain text file</small></div>
+            <div class="file-item">📋 sample.json<br><small>JSON data file</small></div>
+            <div class="file-item">📋 sample.xml<br><small>XML markup file</small></div>
+            <div class="file-item">🌐 sample.html<br><small>HTML document</small></div>
+            <div class="file-item">🎨 sample.css<br><small>CSS stylesheet</small></div>
+            <div class="file-item">⚡ sample.js<br><small>JavaScript file</small></div>
+            <div class="file-item">🎨 sample.svg<br><small>SVG vector image</small></div>
+            <div class="file-item">📝 sample.md<br><small>Markdown document</small></div>
+            <div class="file-item">📊 sample.csv<br><small>CSV data file</small></div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>File Format Tests</h2>
+        <button class="test-button" onclick="testTextFiles()">Test Text Files</button>
+        <button class="test-button" onclick="testImageFiles()">Test Image Files</button>
+        <button class="test-button" onclick="testDocumentFiles()">Test Data Files</button>
+        <div id="format-results"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>OmniPlay Application Interface</h2>
+        <iframe src="http://localhost:5000" id="omniplay-frame"></iframe>
+    </div>
+
+    <div class="test-container">
+        <h2>URL Loading Test</h2>
+        <button class="test-button" onclick="testRemoteFiles()">Test Remote File Loading</button>
+        <div id="url-results"></div>
+    </div>
+
+    <script>
+        async function checkAppStatus() {
+            const resultDiv = document.getElementById('status-result');
+            try {
+                const response = await fetch('http://localhost:5000/health');
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <div class="test-result">
+                        <strong>✅ Application Healthy</strong><br>
+                        Status: ${data.status}<br>
+                        Uptime: ${Math.floor(data.uptime)} seconds<br>
+                        Timestamp: ${data.timestamp}
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="test-error">
+                        <strong>❌ Application Error</strong><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testTextFiles() {
+            const resultDiv = document.getElementById('format-results');
+            const textFiles = ['sample.txt', 'sample.json', 'sample.xml', 'sample.html', 'sample.css', 'sample.js', 'sample.md', 'sample.csv'];
+            let results = '<h3>Text File Access Test</h3>';
+            
+            for (const file of textFiles) {
+                try {
+                    const response = await fetch(`http://localhost:5000/test-files/${file}`);
+                    if (response.ok) {
+                        results += `<div class="test-result">✅ ${file} - Accessible (${response.headers.get('content-type')})</div>`;
+                    } else {
+                        results += `<div class="test-error">❌ ${file} - Not accessible (${response.status})</div>`;
+                    }
+                } catch (error) {
+                    results += `<div class="test-error">❌ ${file} - Error: ${error.message}</div>`;
+                }
+            }
+            resultDiv.innerHTML = results;
+        }
+
+        async function testImageFiles() {
+            const resultDiv = document.getElementById('format-results');
+            let results = '<h3>Image File Test</h3>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/test-files/sample.svg');
+                if (response.ok) {
+                    results += `<div class="test-result">✅ sample.svg - Accessible and renderable</div>`;
+                    results += `<div style="text-align: center; margin: 10px;"><img src="http://localhost:5000/test-files/sample.svg" style="max-width: 200px; border: 1px solid #ddd;"></div>`;
+                } else {
+                    results += `<div class="test-error">❌ sample.svg - Not accessible</div>`;
+                }
+            } catch (error) {
+                results += `<div class="test-error">❌ Image test error: ${error.message}</div>`;
+            }
+            
+            resultDiv.innerHTML = results;
+        }
+
+        async function testDocumentFiles() {
+            const resultDiv = document.getElementById('format-results');
+            let results = '<h3>Data Format Test</h3>';
+            
+            const dataFiles = [
+                { file: 'sample.json', type: 'JSON Data' },
+                { file: 'sample.xml', type: 'XML Markup' },
+                { file: 'sample.csv', type: 'CSV Data' }
+            ];
+            
+            for (const item of dataFiles) {
+                try {
+                    const response = await fetch(`http://localhost:5000/test-files/${item.file}`);
+                    if (response.ok) {
+                        const content = await response.text();
+                        const size = new Blob([content]).size;
+                        results += `<div class="test-result">✅ ${item.file} (${item.type}) - ${size} bytes</div>`;
+                    } else {
+                        results += `<div class="test-error">❌ ${item.file} - Not accessible</div>`;
+                    }
+                } catch (error) {
+                    results += `<div class="test-error">❌ ${item.file} - Error: ${error.message}</div>`;
+                }
+            }
+            
+            resultDiv.innerHTML = results;
+        }
+
+        async function testRemoteFiles() {
+            const resultDiv = document.getElementById('url-results');
+            let results = '<h3>Remote File Loading Test</h3>';
+            
+            // Test some public APIs and files
+            const remoteUrls = [
+                { url: 'https://httpbin.org/json', type: 'JSON API' },
+                { url: 'https://raw.githubusercontent.com/github/gitignore/main/Node.gitignore', type: 'Text File' }
+            ];
+            
+            results += '<p><strong>Note:</strong> These tests check if OmniPlay can potentially load remote files via URL input.</p>';
+            
+            for (const item of remoteUrls) {
+                try {
+                    const response = await fetch(item.url);
+                    if (response.ok) {
+                        results += `<div class="test-result">✅ ${item.type} - Remote URL accessible for OmniPlay loading</div>`;
+                    } else {
+                        results += `<div class="test-error">❌ ${item.type} - Remote URL not accessible</div>`;
+                    }
+                } catch (error) {
+                    results += `<div class="test-error">❌ ${item.type} - CORS or network error (expected for cross-origin requests)</div>`;
+                }
+            }
+            
+            resultDiv.innerHTML = results;
+        }
+
+        // Auto-check app status on load
+        window.onload = function() {
+            checkAppStatus();
+        };
+    </script>
+</body>
+</html>
