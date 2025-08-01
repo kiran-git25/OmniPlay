@@ -1,127 +1,44 @@
-import React, { useState } from 'react';
+function loadPastedUrl() {
+    const input = document.getElementById('mediaUrlInput');
+    let url = input.value.trim();
 
-export default function OpenMediaUrl({ onLoad }) {
-  const [url, setUrl] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleLoad = async () => {
-    setError('');
-    setLoading(true);
-
-    try {
-      const parsed = parseUrl(url);
-
-      if (!parsed) {
-        setError('Unsupported or invalid media URL');
-        setLoading(false);
+    if (!url) {
+        alert("Please paste a valid media URL.");
         return;
-      }
-
-      onLoad({
-        ...parsed,
-        url,
-        isRemote: true,
-        lastModified: Date.now(),
-        name: parsed.name || 'external-media',
-      });
-
-      setUrl('');
-    } catch (err) {
-      setError('Failed to load media');
     }
 
-    setLoading(false);
-  };
-
-  const parseUrl = (url) => {
+    // Decode wrapped redirect URLs like Google/WhatsApp
     try {
-      const youtubeMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]+)/);
-      if (youtubeMatch) {
-        const videoId = youtubeMatch[1];
-        return {
-          type: 'youtube',
-          embed: `https://www.youtube.com/embed/${videoId}`,
-          name: 'YouTube Video',
-        };
-      }
-
-      const instaMatch = url.match(/instagram\.com\/(?:reel|p)\/([^/?#&]+)/);
-      if (instaMatch) {
-        return {
-          type: 'instagram',
-          embed: url,
-          name: 'Instagram Reel',
-        };
-      }
-
-      const extension = url.split('.').pop().toLowerCase();
-      const supported = [
-        'mp4', 'mp3', 'webm', 'ogg', 'aac', 'wav', 'flac', 'm4a',
-        'jpg', 'jpeg', 'png', 'gif', 'svg', 'webp',
-        'pdf', 'txt', 'json', 'xml', 'csv'
-      ];
-
-      if (supported.includes(extension)) {
-        return {
-          type: 'direct',
-          embed: url,
-          name: url.split('/').pop(),
-        };
-      }
-
-      return null;
-    } catch {
-      return null;
+        const urlObj = new URL(url);
+        if (urlObj.hostname.includes("google.com") || urlObj.hostname.includes("whatsapp.com")) {
+            const actualUrl = urlObj.searchParams.get("url") || urlObj.searchParams.get("u");
+            if (actualUrl) url = decodeURIComponent(actualUrl);
+        }
+    } catch (e) {
+        console.warn("Invalid URL structure");
     }
-  };
 
-  return (
-    <div style={styles.wrapper}>
-      <input
-        type="url"
-        value={url}
-        placeholder="Paste a media link (YouTube, Instagram, MP4...)"
-        onChange={(e) => setUrl(e.target.value)}
-        style={styles.input}
-      />
-      <button onClick={handleLoad} disabled={loading || !url} style={styles.button}>
-        {loading ? 'Loading...' : 'Load'}
-      </button>
-      {error && <div style={styles.error}>{error}</div>}
-    </div>
-  );
+    // Normalize YouTube short links
+    if (url.includes("youtu.be/")) {
+        const videoId = url.split("youtu.be/")[1];
+        url = `https://www.youtube.com/watch?v=${videoId}`;
+    }
+
+    // Embed YouTube links
+    if (url.includes("youtube.com/watch?v=")) {
+        const videoId = new URL(url).searchParams.get("v");
+        url = `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    // Embed Instagram reels
+    if (url.includes("instagram.com/reel")) {
+        const cleanUrl = url.split("?")[0];
+        url = `${cleanUrl}embed`;
+    }
+
+    const viewer = document.getElementById('viewerContent');
+    viewer.innerHTML = `<iframe src="${url}" frameborder="0" allowfullscreen style="width:100%; height:80vh;"></iframe>`;
+
+    document.getElementById('viewerSection').style.display = 'block';
+    document.getElementById('uploadSection').style.display = 'none';
 }
-
-const styles = {
-  wrapper: {
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '20px',
-    maxWidth: '700px',
-    margin: '0 auto',
-    gap: '12px',
-  },
-  input: {
-    flex: 1,
-    padding: '12px',
-    fontSize: '1rem',
-    borderRadius: '6px',
-    border: '1px solid #ccc',
-  },
-  button: {
-    padding: '12px',
-    backgroundColor: '#4A90E2',
-    color: 'white',
-    fontWeight: 'bold',
-    borderRadius: '6px',
-    border: 'none',
-    cursor: 'pointer',
-    minWidth: '120px',
-  },
-  error: {
-    color: 'red',
-    fontSize: '0.9rem',
-    marginTop: '-8px',
-  }
-};
