@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="300" height="200" fill="url(#gradient)" rx="10" />
+  
+  <text x="150" y="80" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="bold">
+    OmniPlay
+  </text>
+  
+  <text x="150" y="110" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16">
+    Universal File Viewer
+  </text>
+  
+  <text x="150" y="140" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" opacity="0.8">
+    Test SVG Image
+  </text>
+  
+  <circle cx="50" cy="50" r="15" fill="white" opacity="0.3"/>
+  <circle cx="250" cy="150" r="20" fill="white" opacity="0.2"/>
+  <circle cx="250" cy="50" r="10" fill="white" opacity="0.4"/>
+</svg>

@@ -1,0 +1,78 @@
+📌
+Build an open-source, cross-platform application called **OmniPlay**.
+
+🔧 PURPOSE:
+OmniPlay lets users **open, view, read, play, and share** all common file types — including documents, media files, archives — with a simple interface, **total local privacy**, and **no server-side storage**.
+
+📁 SUPPORTED FORMATS:
+- Documents: `.pdf`, `.docx`, `.txt`, `.csv`, `.xlsx`, `.pptx`, `.odt`, `.epub`
+- Archives: `.zip`, `.rar`, `.7z` (read-only)
+- Media:
+  - Audio: `.mp3`, `.wav`, `.ogg`, `.aac`, `.flac`, `.m4a`
+  - Video: `.mp4`, `.webm`, `.avi`, `.mov`, `.mkv`, `.flv`
+- Links:
+  - Safe streaming of direct media URLs (e.g. `.mp3`, `.mp4`)
+  - Safe YouTube and other streaming links (ad-free if legally permitted)
+  - Links from `.txt` or `.json` files
+- Unsafe executables: `.exe`, `.js`, `.bat`, etc. → **viewable only as plain text with warnings**
+
+💻 PLATFORM SUPPORT:
+- Web (desktop/mobile)
+- Desktop (via Capacitor/electron)
+- Android & iOS (via Capacitor)
+- Fully responsive, cross-browser UI
+
+📱 UI/UX REQUIREMENTS:
+- Simple, clean layout
+- Drag & drop or file picker to open files
+- Tabbed/minimized multi-window viewer for multitasking
+- Dark/light mode optional
+- Must support playing media while app is in background (like a music app)
+
+🔗 EXTERNAL FEATURES:
+- Search bar to input YouTube/media URLs (play in player safely)
+- Can extract and play links from local text files
+- OpenMediaUrl component with format detection and warnings
+
+🌐 NETWORK OPTIONS:
+1. **Offline mode (LAN/Bluetooth/Wi-Fi Direct)**:
+   - Share files and chat peer-to-peer
+   - No internet or server dependency
+   - No cloud relay
+
+2. **Online mode** (optional):
+   - Secure voice and video calls (e.g., via WebRTC)
+   - Private group chats
+   - File/media sharing
+   - Option to delete chat history and groups manually
+   - No accounts, no analytics
+
+🔐 PRIVACY & SECURITY:
+- **100% client-side only** — no data ever sent or stored externally
+- Dangerous file types are sandboxed and never executed
+- Local warning component (`UnsafeFileWarning.jsx`) alerts users before opening risky files
+- `dangerousExtensions.js` defines unsafe extensions
+- `OpenMediaUrl.jsx` allows safe media URL access
+
+🛡️ LEGAL + ETHICAL CONSIDERATIONS:
+- MIT License (with LICENSE.md)
+- TERMS.md: clear user responsibilities
+- PRIVACY.md: no data collection, no tracking, no analytics
+- SECURITY.md: technical safety measures
+- DISCLAIMER.md: “use at your own risk”
+- ETHICAL_USE.md: prohibits illegal or malicious use
+- APP NOTICE:
+  > OmniPlay is intended for legal personal use only. The authors are not liable for any misuse of this app.
+
+🧠 ETHICAL SAFEGUARDS:
+- No Tor or anonymous wide-broadcast support
+- Peer sharing requires manual device pairing (QR/Bluetooth/NFC)
+- User must manually accept shared files
+- Optional “Report Misuse” tool: users can locally save reports of abuse attempts
+- No user accounts, no PII stored anywhere
+
+🧪 TESTS & MAINTENANCE:
+- Include automated virus-simulation test with mock malicious extensions
+- Option to run app security check via unit tests (fake files)
+- Update README.md with features, usage, license, and security statement
+- Use Vercel (React preset) for deployment

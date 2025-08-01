@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<omniplay>
+    <application>
+        <name>OmniPlay</name>
+        <version>1.0.0</version>
+        <description>Universal File Viewer</description>
+    </application>
+    <features>
+        <feature>Client-side processing</feature>
+        <feature>Multiple file formats</feature>
+        <feature>Secure file handling</feature>
+        <feature>Drag and drop interface</feature>
+    </features>
+    <supportedFormats>
+        <documents>
+            <format>PDF</format>
+            <format>DOCX</format>
+            <format>XLSX</format>
+        </documents>
+        <images>
+            <format>JPG</format>
+            <format>PNG</format>
+            <format>GIF</format>
+            <format>SVG</format>
+        </images>
+        <text>
+            <format>TXT</format>
+            <format>MD</format>
+            <format>JSON</format>
+            <format>XML</format>
+        </text>
+    </supportedFormats>
+</omniplay>

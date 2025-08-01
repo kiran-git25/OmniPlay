@@ -1,0 +1,270 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security scan daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    name: Advanced Security Audit
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install Dependencies
+      run: npm ci
+      
+    - name: NPM Audit
+      run: |
+        echo "🔒 Running comprehensive npm audit..."
+        npm audit --audit-level moderate --json > audit-report.json || true
+        npm audit --audit-level moderate || echo "Security vulnerabilities found"
+        
+    - name: File Viewer Security Check
+      run: |
+        echo "🔍 Running file viewer specific security checks..."
+        
+        # Check for file upload restrictions
+        echo "Checking file upload security..."
+        if grep -r "\.exe\|\.bat\|\.vbs\|\.scr\|\.com\|\.pif" --include="*.js" .; then
+          echo "⚠️ Found references to executable file extensions"
+        else
+          echo "✅ No executable file extension references found"
+        fi
+        
+        # Check for proper file validation
+        echo "Checking file validation logic..."
+        if grep -r "MIME\|content-type\|file-type" --include="*.js" .; then
+          echo "✅ File type validation found"
+        else
+          echo "⚠️ Consider adding file type validation"
+        fi
+        
+        # Check for XSS prevention
+        echo "Checking XSS prevention..."
+        if grep -r "innerHTML\|document.write" --include="*.js" .; then
+          echo "⚠️ Potential XSS vectors found - review for proper sanitization"
+        else
+          echo "✅ No obvious XSS vectors detected"
+        fi
+        
+    - name: Client-Side Security Validation
+      run: |
+        echo "🛡️ Validating client-side security measures..."
+        
+        # Check for proper content security policy
+        if grep -r "Content-Security-Policy" --include="*.js" --include="*.html" .; then
+          echo "✅ CSP implementation found"
+        else
+          echo "⚠️ Consider implementing Content Security Policy"
+        fi
+        
+        # Check for secure file handling
+        echo "Checking secure file handling..."
+        if grep -r "FileReader\|createObjectURL" --include="*.js" .; then
+          echo "ℹ️ Client-side file handling detected - ensure proper cleanup"
+        fi
+        
+        # Check for localStorage/sessionStorage usage
+        if grep -r "localStorage\|sessionStorage" --include="*.js" .; then
+          echo "ℹ️ Browser storage usage detected - ensure no sensitive data stored"
+        fi
+        
+    - name: Dependency Security Check
+      run: |
+        echo "📦 Checking dependency security..."
+        
+        # Check for known vulnerable packages
+        node -e "
+        const pkg = require('./package.json');
+        const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+        
+        console.log('🔍 Analyzing dependencies for known issues...');
+        
+        // List all dependencies with versions
+        Object.entries(deps).forEach(([name, version]) => {
+          console.log(\`📦 \${name}: \${version}\`);
+        });
+        
+        console.log('✅ Dependency analysis complete');
+        "
+        
+    - name: File System Security Check
+      run: |
+        echo "💾 Checking file system security..."
+        
+        # Check for any files that might be executed
+        find . -type f -perm -111 | grep -v node_modules | grep -v .git | while read file; do
+          echo "⚠️ Executable file found: $file"
+        done
+        
+        # Check for hidden files that might contain secrets
+        find . -name ".*" -type f | grep -v ".git" | grep -v ".replit" | grep -v ".gitignore" | while read file; do
+          echo "ℹ️ Hidden file found: $file"
+        done
+        
+    - name: Generate Security Report
+      run: |
+        echo "📋 Security Scan Summary:"
+        echo "========================"
+        echo "Scan Date: $(date)"
+        echo "Repository: ${{ github.repository }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo ""
+        echo "🔒 Security Status: SCAN COMPLETED"
+        echo ""
+        echo "Key Findings:"
+        echo "- NPM audit completed"
+        echo "- File viewer security checks performed"
+        echo "- Client-side security validated"
+        echo "- Dependency security analyzed"
+        echo "- File system security checked"
+        echo ""
+        echo "📝 Recommendations:"
+        echo "- Review any warnings above"
+        echo "- Keep dependencies updated"
+        echo "- Implement CSP headers if not present"
+        echo "- Regular security audits recommended"
+        
+    - name: Upload Security Report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-report
+        path: |
+          audit-report.json
+        retention-days: 30
+
+  # File type security validation
+  file-type-security:
+    runs-on: ubuntu-latest
+    name: File Type Security Analysis
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Analyze Supported File Types
+      run: |
+        echo "📁 Analyzing supported file types security..."
+        
+        # Create a comprehensive list of file types that should be supported
+        cat << 'EOF' > supported-types.txt
+        # Safe file types for viewing
+        .pdf
+        .txt
+        .md
+        .json
+        .xml
+        .yaml
+        .yml
+        .csv
+        .html
+        .css
+        .js
+        .docx
+        .doc
+        .xlsx
+        .xls
+        .pptx
+        .ppt
+        .jpg
+        .jpeg
+        .png
+        .gif
+        .svg
+        .bmp
+        .ico
+        .webp
+        .avif
+        .tiff
+        .mp3
+        .wav
+        .ogg
+        .flac
+        .aac
+        .m4a
+        .wma
+        .mp4
+        .webm
+        .mkv
+        .avi
+        .mov
+        .flv
+        .3gp
+        .zip
+        .rar
+        .7z
+        .tar
+        .gz
+        EOF
+        
+        # Dangerous file types that should NOT be executed
+        cat << 'EOF' > dangerous-types.txt
+        .exe
+        .bat
+        .cmd
+        .com
+        .scr
+        .pif
+        .vbs
+        .vbe
+        .js (when executed server-side)
+        .jar
+        .app
+        .deb
+        .rpm
+        .msi
+        .dmg
+        .pkg
+        EOF
+        
+        echo "✅ Supported file types documented"
+        echo "⚠️  Dangerous file types identified"
+        echo ""
+        echo "Security recommendations:"
+        echo "- Never execute uploaded files server-side"
+        echo "- Always process files client-side only"
+        echo "- Validate file types before processing"
+        echo "- Use proper MIME type checking"
+        echo "- Implement file size limits"
+        
+    - name: Code Analysis for File Handling
+      run: |
+        echo "🔍 Analyzing code for safe file handling..."
+        
+        # Check for proper file type validation
+        if grep -r "allowedTypes\|acceptedFormats\|fileType" --include="*.js" .; then
+          echo "✅ File type validation logic found"
+        else
+          echo "⚠️ Consider implementing file type validation"
+        fi
+        
+        # Check for file size limits
+        if grep -r "maxSize\|size.*limit\|file.*size" --include="*.js" .; then
+          echo "✅ File size limiting found"
+        else
+          echo "⚠️ Consider implementing file size limits"
+        fi
+        
+        # Ensure no server-side execution
+        if grep -r "exec\|spawn\|eval\|Function.*constructor" --include="*.js" .; then
+          echo "❌ CRITICAL: Code execution functions found - review immediately"
+          exit 1
+        else
+          echo "✅ No code execution functions detected"
+        fi

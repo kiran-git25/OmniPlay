@@ -1,0 +1,9 @@
+This is a sample text file for testing OmniPlay.
+
+OmniPlay supports the following features:
+- Universal file viewing
+- Client-side processing
+- Multiple file formats
+- Drag and drop interface
+
+This text file should display properly in the viewer.

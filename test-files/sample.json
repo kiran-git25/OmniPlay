@@ -1,0 +1,23 @@
+{
+  "name": "OmniPlay Test Data",
+  "version": "1.0.0",
+  "description": "Sample JSON file for testing OmniPlay file viewer",
+  "features": [
+    "Universal file support",
+    "Client-side processing",
+    "Secure file handling",
+    "Multiple format support"
+  ],
+  "fileTypes": {
+    "documents": ["PDF", "Word", "Excel"],
+    "images": ["JPG", "PNG", "GIF", "SVG"],
+    "text": ["TXT", "MD", "JSON", "XML"],
+    "archives": ["ZIP", "RAR", "7Z"],
+    "media": ["MP3", "MP4", "WAV"]
+  },
+  "security": {
+    "clientSide": true,
+    "noUploads": true,
+    "sandboxed": true
+  }
+}

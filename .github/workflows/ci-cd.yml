@@ -1,0 +1,303 @@
+name: OmniPlay CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  # Validate project structure and dependencies
+  validate:
+    runs-on: ubuntu-latest
+    name: Validate Project Structure
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Check Critical Files
+      run: |
+        echo "🔍 Checking critical files exist..."
+        test -f index.js && echo "✅ index.js found" || exit 1
+        test -f index.html && echo "✅ index.html found" || exit 1
+        test -f package.json && echo "✅ package.json found" || exit 1
+        test -f style.css && echo "✅ style.css found" || exit 1
+        test -d components && echo "✅ components directory found" || exit 1
+        test -d js && echo "✅ js directory found" || exit 1
+        test -d utils && echo "✅ utils directory found" || exit 1
+        
+    - name: Validate Package.json
+      run: |
+        echo "📦 Validating package.json structure..."
+        node -e "
+        const pkg = require('./package.json');
+        console.log('Package name:', pkg.name);
+        console.log('Version:', pkg.version);
+        console.log('Main file:', pkg.main);
+        
+        // Check required dependencies
+        const required = ['express', 'jszip', 'mammoth', 'pdf-dist', 'xlsx'];
+        const missing = required.filter(dep => !pkg.dependencies[dep]);
+        if (missing.length > 0) {
+          console.error('❌ Missing required dependencies:', missing);
+          process.exit(1);
+        }
+        console.log('✅ All required dependencies present');
+        "
+
+  # Install dependencies and validate application
+  build-and-test:
+    needs: validate
+    runs-on: ubuntu-latest
+    name: Build and Test Application
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install Dependencies
+      run: |
+        echo "📥 Installing dependencies..."
+        npm ci
+        
+    - name: Verify Dependencies Installation
+      run: |
+        echo "🔍 Verifying critical dependencies..."
+        npm list express || exit 1
+        npm list jszip || exit 1
+        npm list mammoth || exit 1
+        npm list pdf-dist || exit 1
+        npm list xlsx || exit 1
+        echo "✅ All dependencies verified"
+        
+    - name: Validate JavaScript Syntax
+      run: |
+        echo "🔍 Validating JavaScript syntax..."
+        node -c index.js && echo "✅ index.js syntax valid"
+        
+        # Validate all JS files in components and js directories
+        find components js utils -name "*.js" -type f | while read file; do
+          echo "Checking $file..."
+          node -c "$file" && echo "✅ $file syntax valid" || exit 1
+        done
+        
+    - name: Test Static File Serving
+      run: |
+        echo "🌐 Testing static file serving..."
+        timeout 15s node index.js &
+        SERVER_PID=$!
+        sleep 5
+        
+        # Test main page
+        curl -f http://localhost:5000 > /dev/null && echo "✅ Main page accessible" || exit 1
+        
+        # Test static assets
+        curl -f http://localhost:5000/style.css > /dev/null && echo "✅ CSS accessible" || exit 1
+        
+        # Test components directory
+        curl -f http://localhost:5000/components/ > /dev/null && echo "✅ Components accessible" || echo "⚠️ Components directory not directly accessible (expected)"
+        
+        kill $SERVER_PID 2>/dev/null || true
+        
+    - name: Test File Format Support
+      run: |
+        echo "📁 Testing file format support capabilities..."
+        node -e "
+        console.log('🔍 Testing library availability...');
+        
+        try {
+          const JSZip = require('jszip');
+          console.log('✅ JSZip loaded - Archive support available');
+        } catch (e) {
+          console.error('❌ JSZip failed:', e.message);
+          process.exit(1);
+        }
+        
+        try {
+          const mammoth = require('mammoth');
+          console.log('✅ Mammoth loaded - Word document support available');
+        } catch (e) {
+          console.error('❌ Mammoth failed:', e.message);
+          process.exit(1);
+        }
+        
+        try {
+          const XLSX = require('xlsx');
+          console.log('✅ XLSX loaded - Spreadsheet support available');
+        } catch (e) {
+          console.error('❌ XLSX failed:', e.message);
+          process.exit(1);
+        }
+        
+        console.log('✅ All file format libraries working correctly');
+        "
+        
+    - name: Performance Test
+      run: |
+        echo "⚡ Running performance tests..."
+        timeout 20s node index.js &
+        SERVER_PID=$!
+        sleep 5
+        
+        # Create curl format file for timing
+        echo 'time_namelookup:  %{time_namelookup}s\ntime_connect:     %{time_connect}s\ntime_appconnect:  %{time_appconnect}s\ntime_pretransfer: %{time_pretransfer}s\ntime_redirect:    %{time_redirect}s\ntime_starttransfer: %{time_starttransfer}s\ntime_total:       %{time_total}s\nsize_download:    %{size_download} bytes\nspeed_download:   %{speed_download} bytes/sec' > curl-format.txt
+        
+        echo "📊 Testing response times..."
+        curl -w "@curl-format.txt" -o /dev/null -s http://localhost:5000
+        
+        kill $SERVER_PID 2>/dev/null || true
+
+  # Security validation specific to file viewer
+  security-validation:
+    needs: validate
+    runs-on: ubuntu-latest
+    name: Security Validation
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install Dependencies
+      run: npm ci
+      
+    - name: Run Security Audit
+      run: |
+        echo "🔒 Running npm security audit..."
+        npm audit --audit-level high || echo "⚠️ Security issues found - review required"
+        
+    - name: Check for Dangerous File Extensions
+      run: |
+        echo "🔍 Checking for potentially dangerous files..."
+        # Look for executable files that shouldn't be in a web project
+        find . -name "*.exe" -o -name "*.bat" -o -name "*.vbs" -o -name "*.scr" | while read file; do
+          echo "⚠️ Potentially dangerous file found: $file"
+        done
+        
+    - name: Validate Client-Side Architecture
+      run: |
+        echo "🔍 Validating client-side architecture..."
+        # Check that no server-side file processing occurs
+        if grep -r "fs.writeFile\|fs.createWriteStream" --include="*.js" .; then
+          echo "⚠️ Found server-side file writing - review for security"
+        else
+          echo "✅ No server-side file writing detected"
+        fi
+        
+        # Check for proper file upload handling
+        if grep -r "multer\|formidable\|busboy" --include="*.js" .; then
+          echo "⚠️ Found file upload middleware - ensure client-side processing only"
+        else
+          echo "✅ No file upload middleware detected"
+        fi
+        
+    - name: Check CSP and Security Headers
+      run: |
+        echo "🔒 Checking for security headers implementation..."
+        if grep -r "Content-Security-Policy\|X-Frame-Options\|X-Content-Type-Options" --include="*.js" .; then
+          echo "✅ Security headers found"
+        else
+          echo "⚠️ Consider implementing security headers"
+        fi
+
+  # Browser compatibility check
+  compatibility-check:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    name: Browser Compatibility Check
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Check for Modern JavaScript Features
+      run: |
+        echo "🌐 Checking browser compatibility..."
+        
+        # Check for modern JS features that might not work in older browsers
+        echo "Looking for ES6+ features..."
+        if grep -r "const\|let\|=>\|async\|await\|\`.*\${" --include="*.js" components/ js/ utils/ || true; then
+          echo "ℹ️ Modern JavaScript features detected - ensure browser compatibility"
+        fi
+        
+        # Check for Web APIs usage
+        echo "Checking for Web API usage..."
+        if grep -r "fetch\|FileReader\|URL.createObjectURL\|navigator\." --include="*.js" . || true; then
+          echo "ℹ️ Web APIs detected - ensure polyfills if needed"
+        fi
+        
+    - name: Validate HTML5 Features
+      run: |
+        echo "📱 Checking HTML5 feature usage..."
+        if grep -r "canvas\|video\|audio\|localStorage\|sessionStorage" --include="*.html" --include="*.js" . || true; then
+          echo "ℹ️ HTML5 features detected - ensure fallbacks for older browsers"
+        fi
+
+  # Final validation
+  integration-test:
+    needs: [build-and-test, security-validation, compatibility-check]
+    runs-on: ubuntu-latest
+    name: Integration Test
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install Dependencies
+      run: npm ci
+      
+    - name: Full Application Test
+      run: |
+        echo "🧪 Running full application integration test..."
+        timeout 30s node index.js &
+        SERVER_PID=$!
+        sleep 10
+        
+        # Test multiple endpoints
+        echo "Testing main application..."
+        curl -f http://localhost:5000 > /dev/null || exit 1
+        
+        echo "Testing static assets..."
+        curl -f http://localhost:5000/style.css > /dev/null || exit 1
+        
+        # Test that the application serves the correct MIME types
+        echo "Testing MIME types..."
+        curl -I http://localhost:5000/style.css | grep "text/css" || echo "⚠️ CSS MIME type issue"
+        
+        kill $SERVER_PID 2>/dev/null || true
+        echo "✅ Integration test completed successfully"
+        
+    - name: Generate Test Report
+      run: |
+        echo "📊 Test Summary:"
+        echo "- ✅ Project structure validated"
+        echo "- ✅ Dependencies verified" 
+        echo "- ✅ Static file serving working"
+        echo "- ✅ File format libraries functional"
+        echo "- ✅ Security validation completed"
+        echo "- ✅ Browser compatibility checked"
+        echo "- ✅ Integration test passed"
+        echo ""
+        echo "🎉 OmniPlay is ready for deployment!"

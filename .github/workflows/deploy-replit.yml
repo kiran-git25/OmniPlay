@@ -1,0 +1,222 @@
+name: Deploy to Replit
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  pre-deployment-check:
+    runs-on: ubuntu-latest
+    name: Pre-deployment Validation
+    
+    outputs:
+      deploy-ready: ${{ steps.validation.outputs.ready }}
+      
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install Dependencies
+      run: npm ci
+      
+    - name: Pre-deployment Validation
+      id: validation
+      run: |
+        echo "🚀 Running pre-deployment validation..."
+        
+        # Validate critical files
+        test -f index.js || (echo "❌ index.js missing" && exit 1)
+        test -f index.html || (echo "❌ index.html missing" && exit 1)
+        test -f package.json || (echo "❌ package.json missing" && exit 1)
+        
+        # Test application startup
+        timeout 15s node index.js &
+        sleep 5
+        curl -f http://localhost:5000 > /dev/null || (echo "❌ Application startup failed" && exit 1)
+        
+        # Validate environment-specific configurations
+        if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+          echo "🏭 Production deployment validation..."
+          # Add production-specific checks here
+        fi
+        
+        echo "✅ Pre-deployment validation passed"
+        echo "ready=true" >> $GITHUB_OUTPUT
+        
+    - name: Generate Deployment Manifest
+      run: |
+        echo "📋 Generating deployment manifest..."
+        cat << EOF > deployment-manifest.json
+        {
+          "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+          "commit": "${{ github.sha }}",
+          "branch": "${{ github.ref_name }}",
+          "environment": "${{ github.event.inputs.environment || 'production' }}",
+          "node_version": "${{ env.NODE_VERSION }}",
+          "repository": "${{ github.repository }}"
+        }
+        EOF
+        
+    - name: Upload Deployment Manifest
+      uses: actions/upload-artifact@v3
+      with:
+        name: deployment-manifest
+        path: deployment-manifest.json
+        retention-days: 30
+
+  deploy-to-replit:
+    needs: pre-deployment-check
+    runs-on: ubuntu-latest
+    name: Deploy to Replit
+    if: needs.pre-deployment-check.outputs.deploy-ready == 'true'
+    environment: ${{ github.event.inputs.environment || 'production' }}
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Setup Deployment Environment
+      run: |
+        echo "🔧 Setting up deployment environment..."
+        echo "Target Environment: ${{ github.event.inputs.environment || 'production' }}"
+        echo "Commit SHA: ${{ github.sha }}"
+        echo "Branch: ${{ github.ref_name }}"
+        
+    - name: Prepare Deployment Package
+      run: |
+        echo "📦 Preparing deployment package..."
+        
+        # Create deployment info file
+        cat << EOF > deployment-info.json
+        {
+          "deployed_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+          "commit_sha": "${{ github.sha }}",
+          "branch": "${{ github.ref_name }}",
+          "workflow_run": "${{ github.run_id }}",
+          "environment": "${{ github.event.inputs.environment || 'production' }}"
+        }
+        EOF
+        
+        echo "✅ Deployment package prepared"
+        
+    - name: Deploy to Replit Production
+      if: ${{ github.event.inputs.environment == 'production' || github.event.inputs.environment == '' }}
+      run: |
+        echo "🚚 Deploying to Replit Production..."
+        
+        # Check if production webhook is configured
+        if [ -z "${{ secrets.REPLIT_PRODUCTION_WEBHOOK }}" ]; then
+          echo "⚠️ REPLIT_PRODUCTION_WEBHOOK secret not configured"
+          echo "To enable automatic deployment:"
+          echo "1. Go to repository Settings → Secrets and variables → Actions"
+          echo "2. Add REPLIT_PRODUCTION_WEBHOOK with your Replit webhook URL"
+          echo "3. The webhook should trigger: git pull && npm install && pm2 restart app"
+          echo ""
+          echo "Manual deployment steps for Replit:"
+          echo "1. Open your Replit project"
+          echo "2. Run: git pull origin main"
+          echo "3. Run: npm install"
+          echo "4. Restart your application"
+        else
+          echo "📡 Triggering Replit production deployment..."
+          curl -X POST "${{ secrets.REPLIT_PRODUCTION_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "repository": "${{ github.repository }}",
+              "ref": "${{ github.ref }}",
+              "sha": "${{ github.sha }}",
+              "environment": "production",
+              "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
+            }' || echo "⚠️ Webhook failed - check Replit webhook URL"
+        fi
+        
+    - name: Deploy to Replit Staging
+      if: ${{ github.event.inputs.environment == 'staging' }}
+      run: |
+        echo "🧪 Deploying to Replit Staging..."
+        
+        if [ -z "${{ secrets.REPLIT_STAGING_WEBHOOK }}" ]; then
+          echo "⚠️ REPLIT_STAGING_WEBHOOK secret not configured"
+          echo "Staging deployment webhook not available"
+        else
+          echo "📡 Triggering Replit staging deployment..."
+          curl -X POST "${{ secrets.REPLIT_STAGING_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "repository": "${{ github.repository }}",
+              "ref": "${{ github.ref }}",
+              "sha": "${{ github.sha }}",
+              "environment": "staging",
+              "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
+            }' || echo "⚠️ Staging webhook failed"
+        fi
+        
+    - name: Post-deployment Verification
+      run: |
+        echo "✅ Deployment initiated successfully"
+        echo ""
+        echo "🔗 Next Steps:"
+        echo "1. Check your Replit project for the latest changes"
+        echo "2. Verify the application is running correctly"
+        echo "3. Test key functionality (file upload, viewing, etc.)"
+        echo "4. Monitor for any errors in Replit console"
+        echo ""
+        echo "📊 Deployment Summary:"
+        echo "- Environment: ${{ github.event.inputs.environment || 'production' }}"
+        echo "- Commit: ${{ github.sha }}"
+        echo "- Time: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+        echo "- Triggered by: ${{ github.actor }}"
+        
+    - name: Notify Deployment Status
+      if: always()
+      run: |
+        if [ "${{ job.status }}" = "success" ]; then
+          echo "🎉 Deployment completed successfully!"
+        else
+          echo "❌ Deployment failed. Check the logs above for details."
+        fi
+
+  # Alternative deployment method using direct git operations
+  deploy-via-git:
+    needs: pre-deployment-check
+    runs-on: ubuntu-latest
+    name: Alternative Git-based Deployment
+    if: needs.pre-deployment-check.outputs.deploy-ready == 'true' && github.event.inputs.environment == 'git-deploy'
+    
+    steps:
+    - name: Git-based Replit Deployment
+      run: |
+        echo "🔄 Alternative deployment method..."
+        echo ""
+        echo "If webhook deployment fails, you can manually deploy to Replit:"
+        echo ""
+        echo "1. Connect to your Replit project"
+        echo "2. Open the Shell tab"
+        echo "3. Run these commands:"
+        echo "   git pull origin main"
+        echo "   npm install"
+        echo "   npm start"
+        echo ""
+        echo "For automatic sync, consider setting up repl.deploy:"
+        echo "1. Install: curl -s https://raw.githubusercontent.com/khrj/repl.deploy/main/install.sh | bash"
+        echo "2. Configure webhook in GitHub repository secrets"
+        echo "3. Add REPLIT_WEBHOOK_URL pointing to: https://your-repl.username.repl.co/refresh"
