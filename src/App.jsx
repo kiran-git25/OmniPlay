@@ -1,14 +1,15 @@
 import React, { useEffect } from 'react';
 import MainViewer from './components/MainViewer';
-import runPrivacyGuard from './utils/privacy'; // renamed privacy-guard.js
+import runPrivacyGuard from './utils/privacy';
 
 function App() {
   useEffect(() => {
-    runPrivacyGuard();  // 🧹 Privacy cleanup starts here
+    runPrivacyGuard(); // Clear memory after use
   }, []);
 
   return (
     <div className="App">
+      <h1>🧩 OmniPlay</h1>
       <MainViewer />
     </div>
   );
