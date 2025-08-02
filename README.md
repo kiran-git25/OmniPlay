@@ -64,10 +64,10 @@ cd omniplay
 npm install
 
 # Start development server
-npm run dev
+npm start
 
 # Open browser
-open http://localhost:5173
+open http://localhost:5000
 ```
 
 ## 🔒 Privacy & Security
@@ -218,7 +218,3 @@ OmniPlay is provided "as is" without warranties. See [DISCLAIMER.md](DISCLAIMER.
 **Built with privacy, security, and user empowerment in mind.**
 
 *OmniPlay - Your files, your device, your privacy.*
----
-
-🛡️ Made with ♥ by [Kiran](https://github.com/kiran-git25) | Open Source Forever 🌍
-
