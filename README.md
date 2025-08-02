@@ -218,3 +218,7 @@ OmniPlay is provided "as is" without warranties. See [DISCLAIMER.md](DISCLAIMER.
 **Built with privacy, security, and user empowerment in mind.**
 
 *OmniPlay - Your files, your device, your privacy.*
+---
+
+🛡️ Made with ♥ by [Kiran](https://github.com/kiran-git25) | Open Source Forever 🌍
+
