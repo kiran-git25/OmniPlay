@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import FileTile from './FileTile';
+import '../styles.css';
 import URLUploadTile from './URLUploadTile';
 import { handleDroppedFiles, handleUrlInput } from '../utils/fileHandlers';
 
