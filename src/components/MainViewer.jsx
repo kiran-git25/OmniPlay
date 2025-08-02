@@ -6,17 +6,14 @@ import { handleDroppedFiles, handleUrlInput } from '../utils/fileHandlers';
 function MainViewer() {
   const [files, setFiles] = useState([]);
 
-  // Handle file drop
-  const onDrop = (event) => {
+  const onDrop = async (event) => {
     event.preventDefault();
-    const droppedFiles = Array.from(event.dataTransfer.files);
-    const newTiles = handleDroppedFiles(droppedFiles);
+    const dropped = Array.from(event.dataTransfer.files);
+    const newTiles = await handleDroppedFiles(dropped);
     setFiles(prev => [...prev, ...newTiles]);
   };
 
-  const onDragOver = (event) => {
-    event.preventDefault();
-  };
+  const onDragOver = (event) => event.preventDefault();
 
   const handleUrl = async (url) => {
     const tile = await handleUrlInput(url);
@@ -28,17 +25,9 @@ function MainViewer() {
   };
 
   return (
-    <div className="viewer">
-      <div
-        className="dropzone"
-        onDrop={onDrop}
-        onDragOver={onDragOver}
-      >
-        <p>📁 Drag & Drop files here (or paste a link below)</p>
-      </div>
-
+    <div className="viewer" onDrop={onDrop} onDragOver={onDragOver}>
+      <p>📁 Drag & Drop files here or paste a URL below</p>
       <URLUploadTile onUrlSubmit={handleUrl} />
-
       <div className="file-grid">
         {files.map(file => (
           <FileTile key={file.id} file={file} onRemove={() => removeTile(file.id)} />
