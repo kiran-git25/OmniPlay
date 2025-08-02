@@ -1,37 +1,34 @@
 import React from 'react';
-
+import ImageViewer from './viewers/ImageViewer';
 import PdfViewer from './viewers/PdfViewer';
 import DocxViewer from './viewers/DocxViewer';
 import ExcelViewer from './viewers/ExcelViewer';
-import TextViewer from './viewers/TextViewer';
-import CodeViewer from './viewers/CodeViewer';
-import ImageViewer from './viewers/ImageViewer';
-import AudioViewer from './viewers/AudioViewer';
-import VideoViewer from './viewers/VideoViewer';
 import ZipViewer from './viewers/ZipViewer';
+import CodeViewer from './viewers/CodeViewer';
+import AudioVideoViewer from './viewers/AudioVideoViewer';
 import UnknownViewer from './viewers/UnknownViewer';
 
-function FileTile({ file, onRemove }) {
-  let ViewerComponent;
+const viewerMap = {
+  image: ImageViewer,
+  pdf: PdfViewer,
+  docx: DocxViewer,
+  xlsx: ExcelViewer,
+  zip: ZipViewer,
+  code: CodeViewer,
+  media: AudioVideoViewer,
+  unknown: UnknownViewer,
+};
 
-  switch (file.type) {
-    case 'pdf': ViewerComponent = PdfViewer; break;
-    case 'docx': ViewerComponent = DocxViewer; break;
-    case 'excel': ViewerComponent = ExcelViewer; break;
-    case 'text': ViewerComponent = TextViewer; break;
-    case 'code': ViewerComponent = CodeViewer; break;
-    case 'image': ViewerComponent = ImageViewer; break;
-    case 'audio': ViewerComponent = AudioViewer; break;
-    case 'video': ViewerComponent = VideoViewer; break;
-    case 'zip': ViewerComponent = ZipViewer; break;
-    default: ViewerComponent = UnknownViewer;
-  }
+function FileTile({ file, onRemove }) {
+  const Viewer = viewerMap[file.type] || UnknownViewer;
 
   return (
     <div className="file-tile">
-      <button onClick={onRemove}>✖</button>
-      <strong>{file.file.name}</strong>
-      <ViewerComponent file={file.file} />
+      <div className="tile-header">
+        <span className="tile-name">{file.name}</span>
+        <button className="remove-btn" onClick={onRemove}>✖</button>
+      </div>
+      <Viewer file={file} />
     </div>
   );
 }
