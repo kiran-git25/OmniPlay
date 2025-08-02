@@ -2,28 +2,24 @@ import React, { useEffect, useState } from 'react';
 import JSZip from 'jszip';
 
 function ZipViewer({ file }) {
-  const [files, setFiles] = useState([]);
+  const [fileList, setFileList] = useState([]);
 
   useEffect(() => {
     const reader = new FileReader();
     reader.onload = async () => {
       const zip = await JSZip.loadAsync(reader.result);
-      const entries = [];
-      zip.forEach((path, zipEntry) => {
-        entries.push(path);
-      });
-      setFiles(entries);
+      const list = Object.keys(zip.files);
+      setFileList(list);
     };
     reader.readAsArrayBuffer(file);
   }, [file]);
 
   return (
-    <div>
-      <strong>ZIP Contents:</strong>
-      <ul>
-        {files.map((f, i) => <li key={i}>{f}</li>)}
-      </ul>
-    </div>
+    <ul>
+      {fileList.map((name, i) => (
+        <li key={i}>{name}</li>
+      ))}
+    </ul>
   );
 }
 
