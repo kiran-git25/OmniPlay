@@ -3,24 +3,23 @@ import React, { useState } from 'react';
 function URLUploadTile({ onUrlSubmit }) {
   const [url, setUrl] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     if (url.trim()) {
-      onUrlSubmit(url.trim());
+      onUrlSubmit(url);
       setUrl('');
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="url-upload">
+    <div className="file-tile">
       <input
-        type="url"
-        placeholder="Paste media/file URL"
+        type="text"
+        placeholder="Paste file URL"
         value={url}
         onChange={(e) => setUrl(e.target.value)}
       />
-      <button type="submit">Load</button>
-    </form>
+      <button onClick={handleSubmit}>Load URL</button>
+    </div>
   );
 }
 
