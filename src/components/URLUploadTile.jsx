@@ -2,23 +2,22 @@ import React, { useState } from 'react';
 
 function URLUploadTile({ onUrlSubmit }) {
   const [url, setUrl] = useState('');
-
-  const handleSubmit = () => {
-    if (url.trim()) {
+  const submit = () => {
+    if (url) {
       onUrlSubmit(url);
       setUrl('');
     }
   };
 
   return (
-    <div className="file-tile">
+    <div className="url-tile">
       <input
         type="text"
-        placeholder="Paste file URL"
         value={url}
+        placeholder="Paste a URL (image, video, doc...)"
         onChange={(e) => setUrl(e.target.value)}
       />
-      <button onClick={handleSubmit}>Load URL</button>
+      <button onClick={submit}>Load</button>
     </div>
   );
 }
