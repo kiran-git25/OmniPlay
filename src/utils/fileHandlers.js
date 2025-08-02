@@ -1,45 +1,27 @@
-// Generate a unique ID for each tile
-function generateId() {
-  return 'tile-' + Math.random().toString(36).substr(2, 9);
-}
+import { getFileCategory } from './mimeTypes';
 
 export function handleDroppedFiles(fileList) {
-  return fileList.map(file => {
-    const url = URL.createObjectURL(file);
-    const type = file.type || 'unknown';
-    return {
-      id: generateId(),
-      name: file.name,
-      size: file.size,
-      type,
-      src: url,
-      raw: file
-    };
-  });
+  return fileList.map(file => ({
+    id: Date.now() + Math.random(),
+    name: file.name,
+    type: getFileCategory(file.name),
+    file
+  }));
 }
 
 export async function handleUrlInput(url) {
-  if (!url) return null;
-
-  // Determine file type from extension or head request
-  const fileName = url.split('/').pop();
-  const ext = fileName.split('.').pop();
-  const typeGuess = {
-    mp4: 'video/mp4',
-    mp3: 'audio/mpeg',
-    png: 'image/png',
-    jpg: 'image/jpeg',
-    jpeg: 'image/jpeg',
-    pdf: 'application/pdf'
-    // Add more types here
-  }[ext.toLowerCase()] || 'application/octet-stream';
-
-  return {
-    id: generateId(),
-    name: fileName,
-    size: 0,
-    type: typeGuess,
-    src: url,
-    raw: null
-  };
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const name = url.split('/').pop().split('?')[0];
+    return {
+      id: Date.now() + Math.random(),
+      name,
+      type: getFileCategory(name),
+      file: blob
+    };
+  } catch (err) {
+    console.error('Invalid URL:', err);
+    return null;
+  }
 }
