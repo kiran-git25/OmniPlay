@@ -4,12 +4,12 @@ import runPrivacyGuard from './utils/privacy';
 
 function App() {
   useEffect(() => {
-    runPrivacyGuard(); // Clear memory after use
+    runPrivacyGuard();
   }, []);
 
   return (
     <div className="App">
-      <h1>🧩 OmniPlay</h1>
+      <h1>📂 OmniPlay</h1>
       <MainViewer />
     </div>
   );
