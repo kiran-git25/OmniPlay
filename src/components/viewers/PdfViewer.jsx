@@ -1,28 +1,16 @@
-import React, { useEffect, useRef } from 'react';
-import { getDocument } from 'pdfjs-dist';
+import React from 'react';
 
 function PdfViewer({ file }) {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const renderPDF = async () => {
-      const pdfData = await file.arrayBuffer();
-      const pdf = await getDocument({ data: pdfData }).promise;
-      const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: 1.5 });
-
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-
-      await page.render({ canvasContext: context, viewport }).promise;
-    };
-
-    renderPDF();
-  }, [file]);
-
-  return <canvas ref={canvasRef} style={{ border: '1px solid #ccc' }} />;
+  const url = URL.createObjectURL(file);
+  return (
+    <iframe
+      src={url}
+      title="PDF Viewer"
+      width="100%"
+      height="600px"
+      style={{ border: 'none' }}
+    />
+  );
 }
 
 export default PdfViewer;
