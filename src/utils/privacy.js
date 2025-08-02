@@ -1,14 +1,7 @@
 export default function runPrivacyGuard() {
-  // Clear memory blobs
-  window.addEventListener('beforeunload', () => {
-    window.URL.revokeObjectURL && window.URL.revokeObjectURL();
-  });
-
-  // Disable localStorage/sessionStorage
-  try {
-    Object.defineProperty(window, 'localStorage', { get: () => null });
-    Object.defineProperty(window, 'sessionStorage', { get: () => null });
-  } catch (e) {
-    console.warn('Storage blocking failed', e);
-  }
+  if (window.localStorage) localStorage.clear();
+  if (window.sessionStorage) sessionStorage.clear();
+  if (window.caches) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+  if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+  console.log("🔒 Privacy cleanup complete.");
 }
