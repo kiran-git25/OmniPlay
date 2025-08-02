@@ -2,20 +2,23 @@ import React, { useEffect, useState } from 'react';
 import mammoth from 'mammoth';
 
 function DocxViewer({ file }) {
-  const [content, setContent] = useState('');
+  const [htmlContent, setHtmlContent] = useState('');
 
   useEffect(() => {
-    const readDocx = async () => {
-      const arrayBuffer = await file.arrayBuffer();
-      const { value } = await mammoth.convertToHtml({ arrayBuffer });
-      setContent(value);
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const arrayBuffer = e.target.result;
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      setHtmlContent(result.value);
     };
-
-    readDocx();
+    reader.readAsArrayBuffer(file);
   }, [file]);
 
   return (
-    <div dangerouslySetInnerHTML={{ __html: content }} style={{ padding: '1rem' }} />
+    <div
+      className="docx-viewer"
+      dangerouslySetInnerHTML={{ __html: htmlContent }}
+    />
   );
 }
 
