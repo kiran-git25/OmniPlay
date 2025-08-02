@@ -2,42 +2,20 @@ import React, { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 
 function ExcelViewer({ file }) {
-  const [sheets, setSheets] = useState([]);
+  const [table, setTable] = useState('');
 
   useEffect(() => {
-    const readExcel = async () => {
-      const data = await file.arrayBuffer();
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
-
-      const sheetData = workbook.SheetNames.map(name => ({
-        name,
-        data: XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1 }),
-      }));
-
-      setSheets(sheetData);
+      const html = XLSX.utils.sheet_to_html(workbook.Sheets[workbook.SheetNames[0]]);
+      setTable(html);
     };
-
-    readExcel();
+    reader.readAsArrayBuffer(file);
   }, [file]);
 
-  return (
-    <div>
-      {sheets.map((sheet, index) => (
-        <div key={index}>
-          <h3>{sheet.name}</h3>
-          <table>
-            <tbody>
-              {sheet.data.map((row, i) => (
-                <tr key={i}>
-                  {row.map((cell, j) => <td key={j}>{cell}</td>)}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ))}
-    </div>
-  );
+  return <div dangerouslySetInnerHTML={{ __html: table }} />;
 }
 
 export default ExcelViewer;
