@@ -1,18 +1,14 @@
 import React from 'react';
 
-function MediaViewer({ file, type }) {
+function MediaViewer({ file }) {
   const url = URL.createObjectURL(file);
+  const type = file.type;
 
-  switch (type) {
-    case 'image':
-      return <img src={url} alt="img" style={{ maxWidth: '100%' }} />;
-    case 'audio':
-      return <audio src={url} controls />;
-    case 'video':
-      return <video src={url} controls width="100%" />;
-    default:
-      return <div>Unsupported media type</div>;
-  }
+  if (type.startsWith('image/')) return <img src={url} alt="preview" style={{ maxWidth: '100%' }} />;
+  if (type.startsWith('audio/')) return <audio src={url} controls />;
+  if (type.startsWith('video/')) return <video src={url} controls style={{ width: '100%' }} />;
+
+  return <div>Unsupported media</div>;
 }
 
 export default MediaViewer;
