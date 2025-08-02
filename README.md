@@ -64,10 +64,10 @@ cd omniplay
 npm install
 
 # Start development server
-npm start
+npm run dev
 
 # Open browser
-open http://localhost:5000
+open http://localhost:5173
 ```
 
 ## 🔒 Privacy & Security
