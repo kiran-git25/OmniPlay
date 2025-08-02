@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import FileTile from './FileTile';
-import '../styles.css';
 import URLUploadTile from './URLUploadTile';
 import { handleDroppedFiles, handleUrlInput } from '../utils/fileHandlers';
+import '../styles.css';
 
 function MainViewer() {
   const [files, setFiles] = useState([]);
@@ -22,7 +22,7 @@ function MainViewer() {
   };
 
   const removeTile = (id) => {
-    setFiles(files.filter(f => f.id !== id));
+    setFiles(prev => prev.filter(f => f.id !== id));
   };
 
   return (
