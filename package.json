@@ -1,7 +1,10 @@
 {
   "name": "omniplay",
   "version": "1.0.0",
-  "description": "Universal privacy-first file viewer",
+  "private": true,
+  "description": "Privacy-first universal file viewer for 55+ formats",
+  "author": "your-name",
+  "license": "MIT",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -12,12 +15,10 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "^5.0.1",
-    "mammoth": "^1.4.2",
     "jszip": "^3.10.1",
-    "pdfjs-dist": "^3.11.174",
+    "mammoth": "^1.9.1",
     "xlsx": "^0.18.5",
-    "highlight.js": "^11.9.0",
-    "react-dropzone": "^14.2.3"
-  },
-  "license": "MIT"
+    "pdfjs-dist": "^3.11.174",
+    "highlight.js": "^11.9.0"
+  }
 }
