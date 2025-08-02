@@ -1,31 +1,50 @@
-import mammoth from 'mammoth';
-import JSZip from 'jszip';
-import * as XLSX from 'xlsx';
+import { v4 as uuidv4 } from 'uuid';
 
-export async function handleDroppedFiles(files) {
-  return Promise.all(files.map(file => readFileToTile(file)));
+export function handleDroppedFiles(files) {
+  return files.map(file => ({
+    id: uuidv4(),
+    file,
+    type: detectFileType(file),
+  }));
 }
 
 export async function handleUrlInput(url) {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  const name = url.split('/').pop();
-  return readFileToTile(new File([blob], name, { type: blob.type }));
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const name = url.split('/').pop().split('?')[0];
+    const file = new File([blob], name || 'remote-file', { type: blob.type });
+    return {
+      id: uuidv4(),
+      file,
+      type: detectFileType(file),
+    };
+  } catch (e) {
+    alert("Failed to fetch file: " + e.message);
+    return null;
+  }
 }
 
-export async function readFileToTile(file) {
-  const ext = file.name.split('.').pop().toLowerCase();
-  const blob = file;
+function detectFileType(file) {
+  const name = file.name.toLowerCase();
+  const mime = file.type;
 
-  if (ext === 'pdf') return { id: Date.now(), type: 'pdf', name: file.name, blob };
-  if (ext === 'docx') return { id: Date.now(), type: 'docx', name: file.name, blob };
-  if (['xlsx', 'xls'].includes(ext)) return { id: Date.now(), type: 'excel', name: file.name, blob };
-  if (['txt', 'md', 'csv', 'json', 'xml', 'yaml', 'yml'].includes(ext)) return { id: Date.now(), type: 'text', name: file.name, blob };
-  if (['js', 'html', 'css', 'py', 'java', 'cpp', 'ts'].includes(ext)) return { id: Date.now(), type: 'code', name: file.name, blob };
-  if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)) return { id: Date.now(), type: 'image', name: file.name, blob };
-  if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a'].includes(ext)) return { id: Date.now(), type: 'audio', name: file.name, blob };
-  if (['mp4', 'webm', 'avi', 'mov', 'mkv', 'flv'].includes(ext)) return { id: Date.now(), type: 'video', name: file.name, blob };
-  if (ext === 'zip') return { id: Date.now(), type: 'zip', name: file.name, blob };
+  if (mime.includes('pdf') || name.endsWith('.pdf')) return 'pdf';
+  if (name.endsWith('.docx')) return 'docx';
+  if (name.endsWith('.xls') || name.endsWith('.xlsx')) return 'excel';
+  if (name.endsWith('.txt') || name.endsWith('.csv') || name.endsWith('.json') ||
+      name.endsWith('.xml') || name.endsWith('.yaml') || name.endsWith('.md')) return 'text';
 
-  return { id: Date.now(), type: 'unknown', name: file.name, blob };
+  if (name.endsWith('.js') || name.endsWith('.ts') || name.endsWith('.html') ||
+      name.endsWith('.css') || name.endsWith('.java') || name.endsWith('.py') ||
+      name.endsWith('.cpp') || name.endsWith('.c') || name.endsWith('.cs')) return 'code';
+
+  if (mime.startsWith('image/') || name.match(/\.(jpg|jpeg|png|gif|webp|bmp|ico|svg)$/)) return 'image';
+  if (mime.startsWith('audio/') || name.match(/\.(mp3|wav|ogg|aac|flac|m4a)$/)) return 'audio';
+  if (mime.startsWith('video/') || name.match(/\.(mp4|webm|avi|mov|mkv|flv)$/)) return 'video';
+
+  if (name.endsWith('.zip')) return 'zip';
+  if (name.endsWith('.rar') || name.endsWith('.7z')) return 'archive';
+
+  return 'unknown';
 }
