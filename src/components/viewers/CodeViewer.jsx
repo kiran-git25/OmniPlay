@@ -1,20 +1,19 @@
-import React, { useEffect, useRef } from 'react';
-import hljs from 'highlight.js';
-import 'highlight.js/styles/github.css';
+import React, { useEffect, useState } from 'react';
 
 function CodeViewer({ file }) {
-  const ref = useRef();
+  const [code, setCode] = useState('');
 
   useEffect(() => {
     const reader = new FileReader();
-    reader.onload = () => {
-      ref.current.textContent = reader.result;
-      hljs.highlightElement(ref.current);
-    };
+    reader.onload = () => setCode(reader.result);
     reader.readAsText(file);
   }, [file]);
 
-  return <pre><code ref={ref} className="hljs" /></pre>;
+  return (
+    <pre style={{ whiteSpace: 'pre-wrap', background: '#f4f4f4', padding: '10px' }}>
+      <code>{code}</code>
+    </pre>
+  );
 }
 
 export default CodeViewer;
