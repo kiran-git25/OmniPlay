@@ -1,29 +1,37 @@
 import React from 'react';
-import DocumentViewer from '../viewers/DocumentViewer';
-import MediaViewer from '../viewers/MediaViewer';
-import CodeViewer from '../viewers/CodeViewer';
-import ZipViewer from '../viewers/ZipViewer';
+import PdfViewer from './viewers/PdfViewer';
+import DocxViewer from './viewers/DocxViewer';
+import ExcelViewer from './viewers/ExcelViewer';
+import TextViewer from './viewers/TextViewer';
+import CodeViewer from './viewers/CodeViewer';
+import ImageViewer from './viewers/ImageViewer';
+import AudioViewer from './viewers/AudioViewer';
+import VideoViewer from './viewers/VideoViewer';
+import ZipViewer from './viewers/ZipViewer';
+import UnknownViewer from './viewers/UnknownViewer';
 
 function FileTile({ file, onRemove }) {
-  let viewer;
-
-  if (file.type === 'document') {
-    viewer = <DocumentViewer file={file.file} />;
-  } else if (file.type === 'media') {
-    viewer = <MediaViewer file={file.file} />;
-  } else if (file.type === 'code') {
-    viewer = <CodeViewer file={file.file} />;
-  } else if (file.type === 'zip') {
-    viewer = <ZipViewer file={file.file} />;
-  } else {
-    viewer = <div>Unsupported file</div>;
-  }
+  const renderViewer = () => {
+    const { type, blob, name, url } = file;
+    if (type === 'pdf') return <PdfViewer file={blob} />;
+    if (type === 'docx') return <DocxViewer file={blob} />;
+    if (type === 'excel') return <ExcelViewer file={blob} />;
+    if (type === 'text') return <TextViewer file={blob} />;
+    if (type === 'code') return <CodeViewer file={blob} name={name} />;
+    if (type === 'image') return <ImageViewer file={blob || url} />;
+    if (type === 'audio') return <AudioViewer file={blob || url} />;
+    if (type === 'video') return <VideoViewer file={blob || url} />;
+    if (type === 'zip') return <ZipViewer file={blob} />;
+    return <UnknownViewer file={blob} />;
+  };
 
   return (
-    <div className="file-tile">
-      <strong>{file.name}</strong>
-      {viewer}
-      <button onClick={onRemove}>Remove</button>
+    <div className="tile">
+      <div className="tile-header">
+        <span>{file.name}</span>
+        <button onClick={onRemove}>❌</button>
+      </div>
+      <div className="tile-content">{renderViewer()}</div>
     </div>
   );
 }
